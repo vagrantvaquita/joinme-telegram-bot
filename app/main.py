@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import sys
 
 from aiogram import Bot, Dispatcher
@@ -9,7 +10,7 @@ from handlers.create_event import create_router
 from handlers.find_event import find_router
 from handlers.start import start_router
 
-TOKEN = "7453609096:AAHCKOWT4AX20dv0gowNZZ_-cqfVrjXs7F4"
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CONFIG = DefaultBotProperties(parse_mode=ParseMode.HTML)
 
 
