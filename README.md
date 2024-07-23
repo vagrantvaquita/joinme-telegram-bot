@@ -1,4 +1,5 @@
 # 🫰 JoinMe
+[![Coverage Status](https://coveralls.io/repos/github/vagrantvaquita/joinme-telegram-bot/badge.svg?branch=main)](https://coveralls.io/github/vagrantvaquita/joinme-telegram-bot?branch=main)
 
 JoinMe Bot is a companion for organizing and attending events with friends or like-minded people. Whether you're planning a casual get-together, a concert outing, or a weekend adventure, JoinMe Bot makes it easy to create events and find others to join you.
 
