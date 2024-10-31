@@ -168,3 +168,9 @@ cython_debug/
 # Jupyter
 notebooks/
 *.ipynb
+
+# Serverless
+.serverless
+
+# github
+.github/

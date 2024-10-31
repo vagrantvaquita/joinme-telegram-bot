@@ -2,10 +2,14 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.types.reply_keyboard_remove import ReplyKeyboardRemove
-from models.keyboards import categories_keyboard, event_creation_confirmation_keyboard
-from models.stages import Event
-from models.texts import EVENT_SUMMARY, NO, YES
-from storage import events
+
+from app.models.keyboards import (
+    categories_keyboard,
+    event_creation_confirmation_keyboard,
+)
+from app.models.stages import Event
+from app.models.texts import EVENT_SUMMARY, NO, YES
+from app.storage import events
 
 create_router = Router()
 
@@ -64,7 +68,8 @@ async def update_event_url(message: Message, state: FSMContext) -> None:
     data = await state.update_data(url=message.text)
     await state.set_state(Event.Confirmation)
     await message.answer(
-        text=EVENT_SUMMARY.format(**data), reply_markup=event_creation_confirmation_keyboard.as_markup()
+        text=EVENT_SUMMARY.format(**data),
+        reply_markup=event_creation_confirmation_keyboard.as_markup(),
     )
 
 
@@ -73,12 +78,16 @@ async def save_created_event(callback_query: CallbackQuery, state: FSMContext) -
     await callback_query.answer()
     data = await state.get_data()
     await state.clear()
-    events[data["category"]][data["title"]] = data
-    await callback_query.message.answer(text=f"Event Created! You can return to /start now.")
+    await events.add_event(state.key.user_id, data)
+    await callback_query.message.answer(
+        text=f"Event Created! You can return to /start now."
+    )
 
 
 @create_router.callback_query(Event.Confirmation, F.data == NO)
-async def delete_created_event(callback_query: CallbackQuery, state: FSMContext) -> None:
+async def delete_created_event(
+    callback_query: CallbackQuery, state: FSMContext
+) -> None:
     await callback_query.answer()
     await state.clear()
     await callback_query.message.delete()

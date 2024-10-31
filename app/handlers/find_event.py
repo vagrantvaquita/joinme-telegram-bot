@@ -1,9 +1,10 @@
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from models.keyboards import inline_categories_keyboard
-from models.texts import EVENT_SUMMARY
-from storage import events
+
+from app.models.keyboards import inline_categories_keyboard
+from app.models.texts import EVENT_SUMMARY
+from app.storage import events
 
 find_router = Router()
 
@@ -31,7 +32,9 @@ async def list_registered_events(callback_query: CallbackQuery) -> None:
             reply_markup=keyboard_from_events(event_type, events[event_type]),
         )
     else:
-        await callback_query.message.answer(text=f"No events listed for {event_type} category")
+        await callback_query.message.answer(
+            text=f"No events listed for {event_type} category"
+        )
 
 
 @find_router.callback_query(F.data.startswith("&pick:"))
