@@ -1,0 +1,99 @@
+service: joinme
+
+provider:
+  name: aws
+  stage: prod
+  region: us-east-1
+  runtime: python3.12
+  architecture: arm64
+  deploymentBucket:
+    name: app-vagrantvaquita-prod
+  apiGateway:
+    resourcePolicy:
+      - Effect: Allow
+        Principal: '*'
+        Action: execute-api:Invoke
+        Resource:
+          - execute-api:/*/*/*
+        Condition:
+          IpAddress:
+            # Telegram's CIDR block:
+            # https://core.telegram.org/resources/cidr.txt
+            aws:SourceIp:
+              - 91.108.56.0/22
+              - 91.108.4.0/22
+              - 91.108.8.0/22
+              - 91.108.16.0/22
+              - 91.108.12.0/22
+              - 149.154.160.0/20
+              - 91.105.192.0/23
+              - 91.108.20.0/22
+              - 185.76.151.0/24
+              - 2001:b28:f23d::/48
+              - 2001:b28:f23f::/48
+              - 2001:67c:4e8::/48
+              - 2001:b28:f23c::/48
+              - 2a0a:f280::/32
+  tags:
+    env: ${sls:stage}
+    version: v1
+  iam:
+    role:
+      name: ${self:service}-${sls:stage}-role
+      statements:
+        - Effect: 'Allow'
+          Resource:
+            - !GetAtt DynamoTableEvents.Arn
+            - !GetAtt DynamoTableEvents.StreamArn
+          Action:
+            - "dynamodb:GetItem"
+            - "dynamodb:PutItem"
+            - "dynamodb:UpdateItem"
+            - "dynamodb:GetRecords"
+            - "dynamodb:GetShardIterator"
+            - "dynamodb:DescribeStream"
+            - "dynamodb:ListStreams"
+            - "dynamodb:DeleteItem"
+
+package:
+  patterns:
+    - '!**'
+    - app/**
+
+functions:
+  bot:
+    handler: app.main.handler
+    environment:
+      TELEGRAM_BOT_TOKEN: ${env:TELEGRAM_BOT_TOKEN}
+      TELEGRAM_WEBAPP_URL: ${env:TELEGRAM_WEBAPP_URL}
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    events:
+      - httpApi:
+          method: POST
+          path: /
+
+  backend-event-created:
+    handler: app.backend.when.created.notify
+    environment:
+      TELEGRAM_BOT_TOKEN: ${env:TELEGRAM_BOT_TOKEN}
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    events:
+      - stream:
+          type: dynamodb
+          arn: !GetAtt DynamoTableEvents.StreamArn
+          filterPatterns:
+            - eventName: [INSERT]
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    layer: true
+    compatibleRuntimes:
+      - python3.12
+
+resources:
+  - ${file(stack.yml)}
